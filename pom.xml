@@ -107,7 +107,7 @@
 	</distributionManagement>
 	
 	<build>
-		<finalName>t1app</finalName>
+		<finalName>t1app1</finalName>
 		
 		<plugins>
 			<plugin>

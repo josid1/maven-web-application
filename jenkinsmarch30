@@ -1,0 +1,34 @@
+node{
+	def mavenHome = tool name: 'maven 3.9.1'
+	stage('1.CodeClone'){
+		git 'https://github.com/josid1/maven-web-application'
+		
+	}
+	stage('2.MavenBuild'){
+		sh "${mavenHome}/bin/mvn package"
+	}
+	stage('3.CodeQuality'){
+		sh "${mavenHome}/bin/mvn sonar:sonar"
+	}
+	stage('4.UploadArtifacts'){
+		sh "${mavenHome}/bin/mvn deploy"
+	}
+		stage('5.deployUAT'){
+		deploy adapters: [tomcat9(credentialsId: 'tomcat-cred', path: '', url: 'http://18.233.67.128:8080/')], contextPath: null, war: 'target/*war'
+		
+	}
+		stage('6.ManualApproval'){
+		sh "echo 'ready for review' "
+		timeout(time:5, unit:'HOURS')
+		{ 
+			input message: 'Application ready for deployment, pls review and approve' 
+		}
+	}
+		stage('7email alert'){
+		emailext body: '''Hi Team, 
+Build is done''', subject: 'Build status', to: 'josid1@yours.com'
+		
+	}	
+	
+
+}

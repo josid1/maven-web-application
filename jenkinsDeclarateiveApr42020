@@ -1,0 +1,54 @@
+//declarative file
+pipeline{
+    agent {
+        label 'master' //node label
+    }
+    tools{
+        maven 'maven 3.9.1'
+    }
+    stages{
+        stage('1Clone'){
+            steps{
+                sh "echo cloning"
+                git 'https://github.com/josid1/maven-web-application'
+                sh "echo 'latest build available' "
+            }
+        }
+        stage('2TestBuild'){
+            steps{
+                sh "echo test with mvncleanpackage"
+                sh "mvn clean package"
+            }
+        }
+        stage('3CodeQuality'){
+            steps{
+                sh "echo sonarqube authentication and code quality"
+                sh "mvn sonar:sonar"
+            }
+        }
+        stage('4uploadArtifact'){
+            steps{
+                sh "echo nexus deployment"
+                sh "mvn deploy"
+            }
+        }
+        stage('5deploy'){
+            steps{
+                deploy adapters: [tomcat9(credentialsId: 'tomcat-cred', path: '', url: 'http://107.21.38.167:8080/')], contextPath: null, war: 'target/*war'
+            }
+            
+        }
+    }
+    post{
+        always{
+            emailext body: 'build done', recipientProviders: [buildUser(), developers(), requestor()], subject: 'build done'
+        }
+        success{
+            emailext body: 'good job team', recipientProviders: [buildUser(), developers(), requestor()], subject: 'build success'
+        }
+        failure{
+            emailext body: 'great effort. pls review', recipientProviders: [buildUser(), developers(), requestor()], subject: 'great effort'
+        }
+    
+    }
+}
